@@ -1,0 +1,198 @@
+---
+title: "Comp Bio Project 1"
+author: "Abhishek Bansal"
+date: "10/18/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Abhishek Bansal
+
+**Introduction**
+
+The datasets I have chosen were pulled from the gapminder database. The gapminder database compiles different statistics (i.e. income, GDP, population, etc.) about different countries around the world. The first dataset contains information about the life expectancy in multiple countries from 2000-2015. The second dataset contains information about the child mortality in multiple countries from 2000-2015. The third dataset contains information about the fertility rates in multiple countries from 2000-2015. The final dataset will contain 3 numeric variables (life expectancy, child mortality rate, and fertility rate) and one categorical variable (country). These datasets were pulled by filtering for the years 2000-2015 and selecting the desired variables. The information were downloaded on excel then uploaded to R Studio. These datasets were interesting to me because it is interesting to see how countries differ depending on how urbanized they are. It is also useful to analyze these trends over long periods of time in order to see whether how many countries are moving towards urbanization or not.A possible association I expect to see is that for less urbanized countries, the mortality rates should increase while the expected life expectancy should decrease. Furthermore, for these less urbanized countries, the mortality rates and fertility rates should be high and should increase linearly with each other. 
+
+```{R}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(tibble)
+library(readr)
+#I am going to import the datasets.
+child_mortality_0_5_year_olds_dying_per_1000_born<-read_csv("child_mortality_0_5_year_olds_dying_per_1000_born (1).csv")
+children_per_woman_total_fertility<- read_csv("children_per_woman_total_fertility (1).csv")
+life_expectancy_years <- read_csv("life_expectancy_years (1).csv")
+```
+
+**Tidying: Rearranging Wide/Long**
+
+```{R}
+tidy_cm <- child_mortality_0_5_year_olds_dying_per_1000_born %>% pivot_longer(c("2000","2001","2002","2003","2004","2005","2006","2007","2008","2009","2010","2011","2012","2013","2014","2015"),names_to="year",values_to="child_mortality") %>% na.omit()
+
+tidy_fr <- children_per_woman_total_fertility %>% pivot_longer(c("2000","2001","2002","2003","2004","2005","2006","2007","2008","2009","2010","2011","2012","2013","2014","2015"),names_to="year",values_to="fertility_rate") %>% na.omit()
+
+tidy_le <- life_expectancy_years %>% pivot_longer(c("2000","2001","2002","2003","2004","2005","2006","2007","2008","2009","2010","2011","2012","2013","2014","2015"),names_to="year",values_to="life_expectancy") %>% na.omit()
+
+```
+
+Based on initial observation, the data was not tidy. Each year was its own variable, so the goal was to get all the years as one variable. By using pivot longer, every year from 2000-2015 was put into one column under the variable "years". Furthermore, the values found underneath each year was grouped under one value variable. Depending on the dataset, this variable would either be child mortality, ferility rate, or life expectancy. Therefore, the correct value for each row is given based on the country and year. This allows the data to be tidier since each observation has its own row and every variable has its own column. The NA's in each dataset was omitted in order to make caclulating summary statistics in the future easier. 
+
+**Joining/Merging**
+
+```{R}
+Combined_Data <- tidy_cm %>% left_join(tidy_le) %>% left_join(tidy_fr)
+```
+
+The left_join function was used to merge the datasets. Left-join merges datasets based on the columns that match in each dataset. The two variables that are the same in each dataset are countries and the year. In the first pipe, tidy_le (life expectancy) was left joined with tidy_cm (child mortality). In the second pipe, tidy_fr (ferility rate) was left joined with the other two combined data sets. The result was a combined dataset that includes child mortality, fertility rates, and life expectancy for each country from 2000-2015. No observation was dropped since it was a left_join, so the combined dataset has as much observations as tidy_cm (3120) because everything was left-joined. Possible "NA" values will be considered when calculating summary statistics. 
+
+**Wrangling**
+
+*Summary Statistics with Core Dplyr Functions*
+
+```{R}
+Correlation_matrix <- Combined_Data %>% na.omit() %>% select_if(is.numeric) %>% cor()
+Correlation_matrix
+```
+The select function was used to find the correlations between each variable by only selecting those values that are numeric in the combined dataset. According to the correlation coefficients, there is a strong negative correlation between life expectancy and child-mortality. Therefore, as the life expectancy goes up, the child-mortality rate goes down. Furthermore, there is a strong positive correlation between ferility rate and child mortality. Therefore, as the ferility rate goes up, the child mortality rate also goes up. Finally, there is a strong (but weaker than the other correlations) negative correlation between ferility rate and life expectancy. Therefore, as the life expectancy goes up, the feritility rate goes down. 
+
+```{R}
+Combined_Data %>% group_by(country) %>% summarize(mean(child_mortality,na.rm=T))
+```
+By using the group_by() and summarize() function, the mean child mortality rates for each country during the years 2000-2015 can be found. Based on the table, the country with the highest child mortality rate is Sierra Leone (181.5), and the country with the lowest child mortality rate is Iceland (2.9725). 
+
+```{R}
+Combined_Data %>% filter(year=="2007") %>% arrange(desc(life_expectancy,na.rm=T))
+```
+
+By using the filter() function, only the child mortality rates, life expectancies, and fertility rates for each country from 2007 is shown. Furthermore, the arrange() function organizes this data in descending order based on life expectancy. I decided to do 2007 because this was the midpoint year in my dataset. Since the data was arranged in descending order, it was easy to tell that Japan has the longest life expectancy (82.8 years) while Eswatini has the shortest life expectancy (44.2 years).
+
+```{R}
+Combined_Data %>% mutate(per_100_cases=child_mortality/10)
+```
+
+By using the mutate() function, a new variable called "per_100_cases" was created which shows the mortality rate per 100 births instead of per 1000 births. Essentially, the mutate function allowed to manipulate another variable (child_mortality) in order to create a new variable (per_100_cases). Because the child mortality rates is now on the orders of 100s instead of 1000s, it will make the numbers smaller and less exaggerated. Furthermore, it makes future analysis on the dataset easier since the numbers are smaller and more consistent with the other two variables as well. 
+
+*Summary Statistics with Summary and Group_by*
+
+```{R}
+Combined_Data %>% group_by(country) %>% summarize_if(is.numeric,sd,na.rm=T) %>% head()
+```
+
+The summary statistic above computes the standard deviation of each variable based on each country. The standard deviation statistic calculates the variation of each variable from the mean of all countries of that variable. Higher variations in a variable means that the country varies from the averages of all countries. For example, Afghanistans life expectancy variation (2.314) and ferility rate variation (0.896) do not vary as much as its child mortality variation (18.976). 
+
+```{R}
+Combined_Data %>% group_by(country) %>% summarize_if(is.numeric,mean,na.rm=T) %>% head()
+```
+
+The summary statistic above computes the mean for each variable based on each country. The mean is calculated by taking each respective variable value from 2000-2015 for every country and dividng it by 15 (since there are 15 of each variable in 15 years). For example, the average child mortality of Albania from 2000-2015 was 16.675.
+
+```{R}
+Combined_Data %>% group_by(country) %>% summarize_if(is.numeric,var,na.rm=T) %>% head()
+```
+
+The summmary statistic above computes the variation of each variable based on each country. Higher variation values means that there is more variation of that variable in the dataset. For example, Angola's has a higher variation in child mortality compared to its variation in variables such as life expectancy and fertility rate. 
+
+```{R}
+Combined_Data %>% group_by(country) %>% summarize_if(is.numeric,min,na.rm=T) %>% head()
+```
+
+The summary statistic above computes the minimum value of each variable from the years 2000-2015 based on country. For example, the minimimum fertility rate in Algeria from the years 2000-2015 was 2.4. 
+
+```{R}
+Combined_Data %>% group_by(country) %>% summarize_if(is.numeric,max,na.rm=T) %>% head()
+```
+
+The summary statistic above computes the maximum value of each variable from the years 2000-2015 based on country. For example, the maximum life expectancy in Andorra from the years 2000-2015 was 82.6 years. 
+
+```{R}
+Combined_Data %>% group_by(year) %>% summarize_if(is.numeric,max,na.rm=T) %>% head()
+```
+
+The summary statistic above computes the maximum value of each variable during each year from 2000-2015. For example, the maximum child mortality rate in a country during the year 2000 was 234. 
+
+```{R}
+Combined_Data %>% group_by(year) %>% summarize_if(is.numeric,min,na.rm=T) %>% head()
+```
+
+The summary statistic above computes the minimum value of each variable during each year from 2000-2015. For example, the minimum life expectancy in a country during the year 2004 was 43.9 years. 
+
+```{R}
+Combined_Data %>% group_by(year) %>% summarize_if(is.numeric,var,na.rm=T) %>% head()
+```
+
+The summmary statistic above computes the variation of each variable based on year. Higher variation values means that there is more variation of that variable in the dataset. For example, the year 2001 had a variation of 3.106 in ferility rate, which was much lower compared compared to variation in variables such as life expectancy and fertility rate during the same year. 
+
+```{R}
+Combined_Data %>% group_by(year) %>% summarize_if(is.numeric,mean,na.rm=T) %>% head()
+```
+
+The summary statistic above computes the mean for each variable based for each year. The mean is calculated by taking each respective variable value for every country and each year and dividng it by the total number of countries. For example, the average child mortality in the year 2002 was 52.14774.
+
+```{R}
+Combined_Data %>% group_by(year) %>% summarize_if(is.numeric,sd,na.rm=T) %>% head()
+```
+
+The summary statistic above computes the standard deviation of each variable for all countries each year. The standard deviation statistic calculates the variation of each variable from the mean of all countries for each year of that variable. For example, in the year 2003, life expectancy variation (9.479 years) and ferility rate variation (1.717) did not vary as much as child mortality variation (50.878) that year.
+
+**Visualizations**
+
+```{R}
+color_pattern <- colorRampPalette(c("blue","white","red"))
+```
+The graph above is a heat map for the correlation of variables in the combined dataset. Red boxes show which variables have positive correlations while blue boxes show which variables have negative correlations. Furthermore, the higher the intensity of the color in each box shows the strength of the correlation between two variables. 
+
+```{R}
+ggplot(Combined_Data,aes(child_mortality,fertility_rate,color=log10(life_expectancy)),stat="summary") + geom_point(size=2) + scale_y_continuous("Fertility Rate") + scale_x_continuous("Child Mortality") + scale_color_gradient(low="blue",high="red") + labs(color="Log Life Expectancy") + ggtitle("Child Mortality, Fertility Rate, and Life Expectancy for Countries Around the World") 
+```
+
+The graph shows the child mortality and fertility rates for each country of every year from 2000-2015. So, each unique country in the dataset would have 15 points on the graph. There seems to be a relatively strong, positive, and linear correlation between child mortality and fertility rate from 2000-2015. As the child mortality rates in a country increase, the fertility rates in that country is also likely to increase. The life expectancy was logged because it seemd to strengthen the correlation. From the graph, countries with lower fertility rate and lower child mortality rates were likely to have longer life expectancies. Opposite of that, countries that have high child mortality and high fertility rate were more likely to have lower life expectancies. Essentially, there is a gradient of decrease life expectancy as fertility rate and child mortaility rates both increase. 
+
+```{R}
+ggplot(data=Combined_Data,aes(x=life_expectancy,y=fertility_rate)) + geom_point(aes(color=child_mortality)) + stat_smooth(method="gam",formula = y ~ s(x),size=1,color="cyan") + xlab("Life Expectancy (years)") + scale_y_continuous(name="Fertility Rate",breaks=c(0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8)) + ggtitle("Life Expectancy, Fertility Rates, and Child Mortality Rates for Countries from 2000-2015")
+```
+
+The graph shows the life expectancy in years and fertility rates for each country of every year from 2000-2015. So, each unique country in the dataset would have 15 points on the graph. There seems to be a relatively strong,negative, and linear correlation between life expectancy and fertility rates in countries from 2000-2015. As the life expectancy in a country decreases, the fertility rates in that country is likely to decrease. The child mortality is indicated by the color of each point. Countries with higher child mortality will have a lighter color while countries with lower child mortality will have a darker color. From the graph, countries with low life expectancies and high fertility rates were likely to have more child mortality. Opposite of that, countries that have long life expectancies and low fertility rates were more likely to have lower child mortalitty. Essentially, there is a gradient of decrease in child mortality as fertility rates decrease and life expectancies increase. 
+
+**Dimensionality Reduction**
+
+*Data Preparation*
+
+```{R}
+norm_data <- Combined_Data %>% select_if(is.numeric) %>% na.omit %>% scale
+```
+
+The first step of a Principle Component Analysis (PCA) is to normalize the data. In this step, all the numeric values from the dataset were compiled, the NAs were removed, and the scale was set to mean=0 and sd=1. 
+
+```{R}
+
+```
+
+The summary shows an overview of the princomp. To determine which variables to keep in the PCA analysis, the only part of the summary that is important is the importance of components section.
+
+```{R}
+
+```
+
+Basedon the plot created above, it seems that the PC's that should be used are the 1st and 2nd ones. After that, the curve flattens, so no other PCs should be used.
+
+```{R}
+
+```
+According to these calculations, anything above 0.80 should be dropped. But, since all of them are above 80, the next code will be used to show competence of knowledge.
+
+```{R}
+
+```
+
+According to Kaiser's rule, Ii would pick Comp 1 because it is the only value that is greater than 1. 
+
+*Plotting PCA*
+
+```{R}
+
+```
+The points are not evenly dispursed for PC2 which means that there is no influence on PC2. But the points are evenly distributed on PC1, so there is an influence on PC1. 
+

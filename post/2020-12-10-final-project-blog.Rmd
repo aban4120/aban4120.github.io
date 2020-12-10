@@ -1,0 +1,42 @@
+---
+title: Final Project Blog
+author: ''
+date: '2020-12-10'
+slug: final-project-blog
+categories: []
+tags: []
+description: ''
+---
+##Python Code Example: Finding Summary Statistics in Python
+
+Similar to R, python can be used to find summary statistics of a certain variable in a dataset. This can be helpful because the summary statistics provide helpful data which can be used in further studies. Below is an example using pandas to obtain the dataset and numpy in order to find summary statistics such as the minimum, maximum, mean, and median values for the variables mag and depth from the quakes dataset. 
+
+```{python}
+import pandas as pd
+quakes=pd.read_csv("https://vincentarelbundock.github.io/Rdatasets/csv/datasets/quakes.csv",index_col=0)
+
+import numpy as np
+quakes["mag"].describe()
+quakes["depth"].describe()
+```
+
+As you can see, finding the summary statistics in python is not that much harder than finding the same statistics in R! From the output, the mininium, maximum, mean, and meadian for magnitude is 4, 6.4, 4.6204, and 4.6, respectively. The mininium, maximum, mean, and median for depth is 40, 680, 311.371, and 247, respectively. These statistics provide a broader understanding of the variables magand depth from the quakes dataset.
+
+##Reticulate
+
+One of the fascinating abilities of code is its ability to reticulate, or for it to actually talk to each other! In the example below, the reticulate package is loaded in R first. Once this package is loaded, certain phrases can be assigned to certain variables in R as well as in python (see example below). After these variables are assigned, another line of code in python can be used to construct the entire sentence (combining python and R code chunks)! An example is presented below:
+
+```{R}
+library(reticulate)
+a<-"Python and R"
+```
+
+```{python}
+b="are so fun"
+print(r.a,b)
+```
+
+Here is a funny image that I found showing how python and R are both superior to excel!
+
+![](/post/2020-12-10-final-project-blog_files/image for project.jpg){width=75%}
+</center>

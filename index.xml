@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>My Website</title>
+    <link>/</link>
+    <description>Recent content on My Website</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Thu, 10 Dec 2020 00:00:00 +0000</lastBuildDate><atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Final Project Blog</title>
+      <link>/post/2020/12/10/final-project-blog/</link>
+      <pubDate>Thu, 10 Dec 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2020/12/10/final-project-blog/</guid>
+      <description>Python Code Example: Finding Summary Statistics in Python Similar to R, python can be used to find summary statistics of a certain variable in a dataset. This can be helpful because the summary statistics provide helpful data which can be used in further studies. Below is an example using pandas to obtain the dataset and numpy in order to find summary statistics such as the minimum, maximum, mean, and median values for the variables mag and depth from the quakes dataset.</description>
+    </item>
+    
+    <item>
+      <title>Test Post</title>
+      <link>/post/2020/12/10/test-post/</link>
+      <pubDate>Thu, 10 Dec 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2020/12/10/test-post/</guid>
+      <description> Heading of my post! Content of my post!
+Subheading More Content
+quakes&amp;lt;-quakes r.quakes.mag.mean() ## 4.6204000000000001   </description>
+    </item>
+    
+    <item>
+      <title>Hello R Markdown</title>
+      <link>/post/2015/07/23/hello-r-markdown/</link>
+      <pubDate>Thu, 23 Jul 2015 21:13:14 -0500</pubDate>
+      
+      <guid>/post/2015/07/23/hello-r-markdown/</guid>
+      <description>R Markdown This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see http://rmarkdown.rstudio.com.
+You can embed an R code chunk like this:
+summary(cars) ## speed dist ## Min. : 4.0 Min. : 2.00 ## 1st Qu.:12.0 1st Qu.: 26.00 ## Median :15.0 Median : 36.00 ## Mean :15.4 Mean : 42.98 ## 3rd Qu.</description>
+    </item>
+    
+    <item>
+      <title>Comp Bio Project 1</title>
+      <link>/project/project1/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project1/</guid>
+      <description>Abhishek Bansal Introduction
+The datasets I have chosen were pulled from the gapminder database. The gapminder database compiles different statistics (i.e. income, GDP, population, etc.) about different countries around the world. The first dataset contains information about the life expectancy in multiple countries from 2000-2015. The second dataset contains information about the child mortality in multiple countries from 2000-2015. The third dataset contains information about the fertility rates in multiple countries from 2000-2015.</description>
+    </item>
+    
+    <item>
+      <title>Comp Bio Project 2</title>
+      <link>/project/project2/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project2/</guid>
+      <description>Abhishek Bansal Introduction
+The datasets I have chosen were pulled from the gapminder database. The gapminder database compiles different statistics (i.e. income, GDP, population, etc.) about countries around the world. The first dataset contains information about the life expectancy (in years) of countries located in Africa and Asia in 2015. The second dataset contains information about the child mortality rates of countries located in Africa and Asia in 2015. The third dataset contains information about the fertility rates of countries located in Africa and Asia in 2015.</description>
+    </item>
+    
+    <item>
+      <title>Projects</title>
+      <link>/projects/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/projects/</guid>
+      <description> Check out some of my coding projects below:
+ Wrangling &amp;amp; Exploratory Data Analysis
+ Modeling, Inference, Prediction
+  -- </description>
+    </item>
+    
+    <item>
+      <title>Resume</title>
+      <link>/resume/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/resume/</guid>
+      <description>    </description>
+    </item>
+    
+  </channel>
+</rss>

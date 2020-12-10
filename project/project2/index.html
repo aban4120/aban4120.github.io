@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Abhishek Bansal" />
+    
+    <link rel="shortcut icon" type="image/x-icon" href="../../img/favicon.ico">
+    <title>Comp Bio Project 2</title>
+    <meta name="generator" content="Hugo 0.79.0" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="../../css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="../../"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="../../post/">BLOG</a></li>
+        
+        <li><a href="../../projects/">PROJECTS</a></li>
+        
+        <li><a href="../../resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="../../project/project2/">Comp Bio Project 2</a></strong>
+          </h3>
+        </div>
+ 
+<div class="blog-title">
+          <h4>
+         January 1, 0001 
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<div id="abhishek-bansal" class="section level4">
+<h4>Abhishek Bansal</h4>
+<p><strong>Introduction</strong></p>
+<p>The datasets I have chosen were pulled from the gapminder database. The gapminder database compiles different statistics (i.e. income, GDP, population, etc.) about countries around the world. The first dataset contains information about the life expectancy (in years) of countries located in Africa and Asia in 2015. The second dataset contains information about the child mortality rates of countries located in Africa and Asia in 2015. The third dataset contains information about the fertility rates of countries located in Africa and Asia in 2015. The fourth dataset contains information about the CO2 emissions per person of countries located in Africa and Asia in 2015. The fifth dataset contains information about the continent each country is located in (either Africa or Asia) as of 2015. The final dataset will contain 4 numeric variables (life expectancy, child mortality rate,fertility rate, and CO2 Emissions) and 2 categorical variables (country and continent). These datasets were pulled by filtering for the year 2015 and selecting the desired variables. There are a maximum total of 123 observations in the merged dataset. This is because some of the numeric variables were not recorded during 2015 for every single countries, so NAs will be naturally filled in these holes in order to make combining the datasets possible. Furthermore, the NAs were removed from the dataset, and only countries that are located in Africa or Asia were analyzed.</p>
+<pre class="r"><code>library(lmtest) </code></pre>
+<pre><code>## Loading required package: zoo</code></pre>
+<pre><code>## 
+## Attaching package: &#39;zoo&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     as.Date, as.Date.numeric</code></pre>
+<pre class="r"><code>library(sandwich) 
+library(plotROC) </code></pre>
+<pre><code>## Loading required package: ggplot2</code></pre>
+<pre class="r"><code>library(tidyverse) </code></pre>
+<pre><code>## ── Attaching packages ─────────────────────────────────────────────────── tidyverse 1.3.0 ──</code></pre>
+<pre><code>## ✓ tibble  3.0.3     ✓ dplyr   1.0.1
+## ✓ tidyr   1.1.1     ✓ stringr 1.4.0
+## ✓ readr   1.3.1     ✓ forcats 0.5.0
+## ✓ purrr   0.3.4</code></pre>
+<pre><code>## ── Conflicts ────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(MASS) </code></pre>
+<pre><code>## 
+## Attaching package: &#39;MASS&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:dplyr&#39;:
+## 
+##     select</code></pre>
+<pre class="r"><code>library(glmnet) </code></pre>
+<pre><code>## Loading required package: Matrix</code></pre>
+<pre><code>## 
+## Attaching package: &#39;Matrix&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:tidyr&#39;:
+## 
+##     expand, pack, unpack</code></pre>
+<pre><code>## Loaded glmnet 4.0-2</code></pre>
+<pre class="r"><code>library(ggplot2)
+
+#I am going to import the datasets. 
+childmortality&lt;-read_csv(&quot;child_mortality_0_5_year_olds_dying_per_1000_born.csv&quot;)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   Country = col_character(),
+##   CM.2015 = col_double()
+## )</code></pre>
+<pre class="r"><code>fertility &lt;- read_csv(&quot;children_per_woman_total_fertility.csv&quot;)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   Country = col_character(),
+##   FR2015 = col_double()
+## )</code></pre>
+<pre class="r"><code>lifeexpectancy &lt;- read_csv(&quot;life_expectancy_years.csv&quot;)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   Country = col_character(),
+##   LE.2015 = col_double()
+## )</code></pre>
+<pre class="r"><code>Continent &lt;- read_csv(&quot;Continent.csv&quot;)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   Country = col_character(),
+##   Continent = col_character()
+## )</code></pre>
+<pre class="r"><code>CO2&lt;-read.csv(&quot;co2_emissions_tonnes_per_person.csv&quot;)
+
+#Merging the Datasets
+Combined_Data &lt;- childmortality %&gt;% left_join(CO2) %&gt;% left_join(Continent) %&gt;% left_join(fertility) %&gt;% left_join(lifeexpectancy)</code></pre>
+<pre><code>## Joining, by = &quot;Country&quot;</code></pre>
+<pre><code>## Joining, by = &quot;Country&quot;
+## Joining, by = &quot;Country&quot;
+## Joining, by = &quot;Country&quot;</code></pre>
+<pre class="r"><code>Combined_Data &lt;- Combined_Data %&gt;% na.omit()</code></pre>
+<p><strong>1. MANOVA Test</strong></p>
+<pre class="r"><code>manova&lt;-manova(cbind(CM.2015, CO2.Emission.2015,FR2015, LE.2015)~Continent,data=Combined_Data)
+summary(manova)</code></pre>
+<pre><code>##            Df  Pillai approx F num Df den Df    Pr(&gt;F)    
+## Continent   1 0.47646   22.069      4     97 5.639e-13 ***
+## Residuals 100                                             
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>A MANOVA test was done in order to find the effect of Continent (location) on child mortality, CO2 emissions, life expectancy, ,and fertility rate in different countries in 2015. The MANOVA showed that there were significant differences in each of the variables (p-value less than 0.5).</p>
+<pre class="r"><code>#Univariate ANOVAs
+summary.aov(manova)</code></pre>
+<pre><code>##  Response CM.2015 :
+##              Df Sum Sq Mean Sq F value    Pr(&gt;F)    
+## Continent     1  49906   49906  69.911 3.774e-13 ***
+## Residuals   100  71386     714                      
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##  Response CO2.Emission.2015 :
+##              Df Sum Sq Mean Sq F value    Pr(&gt;F)    
+## Continent     1  723.0  722.98  20.663 1.537e-05 ***
+## Residuals   100 3498.9   34.99                      
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##  Response FR2015 :
+##              Df  Sum Sq Mean Sq F value    Pr(&gt;F)    
+## Continent     1  84.158  84.158  65.167 1.586e-12 ***
+## Residuals   100 129.141   1.291                      
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##  Response LE.2015 :
+##              Df Sum Sq Mean Sq F value    Pr(&gt;F)    
+## Continent     1 2378.8 2378.82  73.228 1.417e-13 ***
+## Residuals   100 3248.5   32.48                      
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>ANOVA's for each numeric variable were conducted as some follow-up tests to the MANOVA. The univariate ANOVA tests for child mortality, CO2 Emissions, fertility rate, and life expectancy alll had p-values less than 0.05. Thus, all of the tests were significant, and all these variables differ based on continent (location).</p>
+<pre class="r"><code>#Post-Hoc T-tests
+pairwise.t.test(Combined_Data$CM.2015,Combined_Data$Continent,p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  Combined_Data$CM.2015 and Combined_Data$Continent 
+## 
+##      Africa 
+## Asia 3.8e-13
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(Combined_Data$FR2015,Combined_Data$Continent,p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  Combined_Data$FR2015 and Combined_Data$Continent 
+## 
+##      Africa 
+## Asia 1.6e-12
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(Combined_Data$CO2.Emission.2015,Combined_Data$Continent,p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  Combined_Data$CO2.Emission.2015 and Combined_Data$Continent 
+## 
+##      Africa 
+## Asia 1.5e-05
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(Combined_Data$LE.2015,Combined_Data$Continent,p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  Combined_Data$LE.2015 and Combined_Data$Continent 
+## 
+##      Africa 
+## Asia 1.4e-13
+## 
+## P value adjustment method: none</code></pre>
+<p>Post hoc analysis was done by doing pairwise comparisons in order to determine which Continents differ in a specific numeric variable. It seems that Asia and Africa significantly differs in terms of all four variables: child mortality, fertility rates, CO2 Emissions, and life expectancy.</p>
+<pre class="r"><code>#Probability of At Least One Type-1 Error
+1-(1-0.05)^9</code></pre>
+<pre><code>## [1] 0.3697506</code></pre>
+<p>There were 9 different hypothesis tests conducted, so the probability of at least 1 Type-1 error is 0.3697506.</p>
+<pre class="r"><code>#Bonferroni Adjustment
+0.05/9</code></pre>
+<pre><code>## [1] 0.005555556</code></pre>
+<p>To keep the Type-1 error at 0.05, a bonferroni adjustment was used to correct the significance level to 0.00555556.</p>
+<pre class="r"><code>#Adjusted Post-Hoc T-tests (Bonferroni)
+pairwise.t.test(Combined_Data$CM.2015,Combined_Data$Continent,p.adj=&quot;bonf&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  Combined_Data$CM.2015 and Combined_Data$Continent 
+## 
+##      Africa 
+## Asia 3.8e-13
+## 
+## P value adjustment method: bonferroni</code></pre>
+<pre class="r"><code>pairwise.t.test(Combined_Data$FR2015,Combined_Data$Continent,p.adj=&quot;bonf&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  Combined_Data$FR2015 and Combined_Data$Continent 
+## 
+##      Africa 
+## Asia 1.6e-12
+## 
+## P value adjustment method: bonferroni</code></pre>
+<pre class="r"><code>pairwise.t.test(Combined_Data$CO2.Emission.2015,Combined_Data$Continent,p.adj=&quot;bonf&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  Combined_Data$CO2.Emission.2015 and Combined_Data$Continent 
+## 
+##      Africa 
+## Asia 1.5e-05
+## 
+## P value adjustment method: bonferroni</code></pre>
+<pre class="r"><code>pairwise.t.test(Combined_Data$LE.2015,Combined_Data$Continent,p.adj=&quot;bonf&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  Combined_Data$LE.2015 and Combined_Data$Continent 
+## 
+##      Africa 
+## Asia 1.4e-13
+## 
+## P value adjustment method: bonferroni</code></pre>
+<p>After adjusting the significance level (bonferroni), the mean difference betweeen Africa and Asia is still significant for child mortality, fertility rate, CO2 emissions, and life expectancy.</p>
+<p>The assumptions of the ANOVA test (random sample, independent observations, equal variance, etc.) were most likely met, but the assumptions for the ANOVA tests were probably not met. MANOVA tests have a lot more assumptions, such as homogeneity, no multicollinearity, no extreme outliers, multivariate normality, etc. As a result, it would be hard to find any dataset that meets every single one of these assumptions.</p>
+<p><strong>2. Randomization Tests</strong></p>
+<p>Null and Alternative Hypothesis Null (Ho): The fertility rate is the same in Africa and North America. Alternative (Ha): The fertility rate is different in Africa and North America.</p>
+<pre class="r"><code>#Test Statistic (mean difference)
+mean_diff&lt;-mean(Combined_Data[Combined_Data$Continent==&quot;Africa&quot;,]$FR2015)-mean(Combined_Data[Combined_Data$Continent==&quot;Asia&quot;,]$FR2015)
+
+#Permutation Loop
+rand_dist&lt;-vector()
+for(i in 1:5000){
+  new&lt;-data.frame(FR2015=sample(Combined_Data$FR2015),Cont=Combined_Data$Continent)
+  rand_dist[i]&lt;-mean(new[new$Cont==&quot;Africa&quot;,]$FR2015)-mean(new[new$Cont==&quot;Asia&quot;,]$FR2015)}
+
+#P-Value for Permutation Test
+mean(rand_dist&gt;mean_diff)*2</code></pre>
+<pre><code>## [1] 0</code></pre>
+<pre class="r"><code>#Independent T-test for Comparison
+t.test(data=Combined_Data,FR2015~Continent)</code></pre>
+<pre><code>## 
+##  Welch Two Sample t-test
+## 
+## data:  FR2015 by Continent
+## t = 8.1434, df = 97.996, p-value = 1.253e-12
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  1.375026 2.261115
+## sample estimates:
+## mean in group Africa   mean in group Asia 
+##             4.361132             2.543061</code></pre>
+<p>According to the randomization test and two sample t-test, the p-values from both of these tests are each below 0.05. So, the null hypothesis can be rejected. There is a significant difference in child mortality in Africa and Asia.</p>
+<pre class="r"><code>#Visualizing Null Distribution and Test Statistic
+{hist(rand_dist,main=&quot;&quot;,ylab=&quot;&quot;);abline(v=mean_diff,col=&quot;red&quot;)}</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<pre class="r"><code>{hist(rand_dist,main=&quot;&quot;,ylab=&quot;&quot;,breaks=2);abline(v=mean_diff,col=&quot;red&quot;)}</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-9-2.png" width="672" /> Breaks were added to the second histogram in order to visualize the test statistic. However, it makes the distribution look different, so a histogram containing the distribution and a histogram containing the line of the test statistic were both created.</p>
+<p><strong>3. Linear Regression Model</strong></p>
+<pre class="r"><code>#Mean-Centering Numeric Variables
+Combined_Data -&gt; Combined_Data_c
+Combined_Data_c$CM.2015 &lt;- Combined_Data_c$CM.2015 - mean(Combined_Data_c$CM.2015,na.rm=T)
+
+#Linear Regression with Interaction
+fit1&lt;-lm(LE.2015~Continent*CM.2015,data=Combined_Data_c)
+summary(fit1)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = LE.2015 ~ Continent * CM.2015, data = Combined_Data_c)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -10.4288  -2.2952  -0.0958   2.2654   7.7346 
+## 
+## Coefficients:
+##                       Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)           67.20517    0.59686 112.598  &lt; 2e-16 ***
+## ContinentAsia          1.34653    1.01478   1.327  0.18762    
+## CM.2015               -0.13739    0.01553  -8.848 3.82e-14 ***
+## ContinentAsia:CM.2015 -0.09722    0.03176  -3.061  0.00285 ** 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 3.619 on 98 degrees of freedom
+## Multiple R-squared:  0.7719, Adjusted R-squared:  0.7649 
+## F-statistic: 110.5 on 3 and 98 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p>The intercept estimate was 67.20517, which is the average life expectancy when there is no interaction between Continent and child mortality. The coefficient estimate of Continent was 1.34653, which is how much the life expectancy increases when the continent is &quot;Asia&quot;. The coefficient estimate of child mortality in 2015 (CM.2015) was -0.13739 which shows how much the life expectancy decreases as the child mortality increases by 1. The coefficient of ContinentAsia:CM.2015 was -0.09722, and shows how much the life expectancy will decrease if the country is located in Asia and the child mortality increases by 1.</p>
+<pre class="r"><code>ggplot(Combined_Data_c,aes(x=CM.2015,y=LE.2015,group=Continent))+geom_point(aes(color=Continent))+geom_smooth(method=&quot;lm&quot;,se=F,fullrange=T,aes(color=Continent))+ggtitle(&quot;Interaction Between Continent and Child Mortality on Life Expectancy in 2015&quot;)+xlab(&quot;Child Mortality in 2015&quot;)+ylab(&quot;Life Expectancy in 2015&quot;)</code></pre>
+<pre><code>## `geom_smooth()` using formula &#39;y ~ x&#39;</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<pre class="r"><code>#Checking Assumptions
+resids&lt;-fit1$residuals
+fitvals&lt;-fit1$fitted.values
+
+#Linearity
+ggplot(Combined_Data_c,aes(x=CM.2015,y=LE.2015))+geom_point()+geom_smooth(method=&quot;lm&quot;,se=F)</code></pre>
+<pre><code>## `geom_smooth()` using formula &#39;y ~ x&#39;</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<pre class="r"><code>#Homoskedasticity from Graph
+ggplot()+geom_point(aes(fitvals,resids))+geom_hline(yintercept=0,color=&#39;red&#39;)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-12-2.png" width="672" /></p>
+<pre class="r"><code>#Homoskedasticity from Breuch-Pagan Test
+bptest(fit1)</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  fit1
+## BP = 3.6101, df = 3, p-value = 0.3068</code></pre>
+<pre class="r"><code>#Normality from Graph
+ggplot()+geom_histogram(aes(resids),bins=10)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-12-3.png" width="672" /></p>
+<pre class="r"><code>ggplot()+geom_qq(aes(sample=resids))+geom_qq_line()</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-12-4.png" width="672" /></p>
+<pre class="r"><code>#Normality from Shapiro-Wilk Test
+shapiro.test(resids)</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  resids
+## W = 0.99003, p-value = 0.6541</code></pre>
+<p>According to the graph, the numeric variable, life expectancy, does seem to have a linear relationship. Additionally, the other two variables (Continent and Child Mortality) are dummy coded and also linear. According to the Breusch-Pagan test, we fail to reject the null hypothesis of homoskedasticity because the p-value (0.3068) was greater than 0.05. According to the Shapiro-Wilk normality test, we fail to reject the null hypothesis of normality beacause the p-value (0.6541) was greater than 0.05. Therefore, the assumptions for linearity, homoskedasticity, and normality are all met.</p>
+<pre class="r"><code>#Heteroskedasticity Robust Standard Errors
+coeftest(fit1,vcov=vcovHC(fit1))</code></pre>
+<pre><code>## 
+## t test of coefficients:
+## 
+##                        Estimate Std. Error  t value  Pr(&gt;|t|)    
+## (Intercept)           67.205167   0.656645 102.3463 &lt; 2.2e-16 ***
+## ContinentAsia          1.346528   0.920771   1.4624  0.146833    
+## CM.2015               -0.137393   0.017995  -7.6350 1.512e-11 ***
+## ContinentAsia:CM.2015 -0.097223   0.030854  -3.1511  0.002158 ** 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>Even though the data met the assumption for homoskedasticity, the regression with heteroskedasticity was redone using robus standard errors. After this was done, the t-values changed very slightly. Furthermore, the p-values change slightly, but not enough to change their previous significance. Overall, the results stayed relatively the same.</p>
+<pre class="r"><code>#Proportion of Variation in Outcome Explained by my Model
+summary(fit1)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = LE.2015 ~ Continent * CM.2015, data = Combined_Data_c)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -10.4288  -2.2952  -0.0958   2.2654   7.7346 
+## 
+## Coefficients:
+##                       Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)           67.20517    0.59686 112.598  &lt; 2e-16 ***
+## ContinentAsia          1.34653    1.01478   1.327  0.18762    
+## CM.2015               -0.13739    0.01553  -8.848 3.82e-14 ***
+## ContinentAsia:CM.2015 -0.09722    0.03176  -3.061  0.00285 ** 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 3.619 on 98 degrees of freedom
+## Multiple R-squared:  0.7719, Adjusted R-squared:  0.7649 
+## F-statistic: 110.5 on 3 and 98 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p>According to the R^2 indicator, the proportion of variation in Life Expectancy explained by the overall model is 0.7719. The adjusted R-squared, which is more conservative, shows that the proportion of variation in life expectncy explained by the model is 0.7649.</p>
+<p><strong>4. Bootstrapping Standard Errors</strong></p>
+<pre class="r"><code>#Boostrapped SE
+samp_distn&lt;-replicate(5000,{
+  boot_dat&lt;-boot_dat&lt;-Combined_Data_c[sample(nrow(Combined_Data_c),replace=TRUE),]
+  fit3&lt;-lm(LE.2015~Continent*CM.2015,data=boot_dat)
+  coef(fit3)
+})
+
+samp_distn%&gt;%t%&gt;%as.data.frame%&gt;%summarize_all(sd)</code></pre>
+<pre><code>##   (Intercept) ContinentAsia    CM.2015 ContinentAsia:CM.2015
+## 1   0.6371097      0.863469 0.01754492            0.02904867</code></pre>
+<pre class="r"><code>#Bootstrapped SE (Resampling Residuals)
+fit3&lt;-lm(LE.2015~Continent*CM.2015,data=Combined_Data_c)
+resids&lt;-fit3$residuals
+fitted&lt;-fit3$fitted.values
+
+resid_resamp&lt;-replicate(5000,{
+  new_resids&lt;-sample(resids,replace=TRUE)
+  Combined_Data_c$new_y&lt;-fitted+new_resids
+  fit4&lt;-lm(new_y~Continent*CM.2015,data=Combined_Data_c)
+  coef(fit4)
+})
+
+resid_resamp%&gt;%t%&gt;%as.data.frame%&gt;%summarize_all(sd)</code></pre>
+<pre><code>##   (Intercept) ContinentAsia    CM.2015 ContinentAsia:CM.2015
+## 1   0.5885519      1.004597 0.01532157            0.03113997</code></pre>
+<p>Since the data was not completely normal, it was important to rerun the model with bootstrapped standard errors. The bootstraped standard errors were all lower than the robust hetereskedastic standard errors. However, when comparing the original standard errors to the bootstrapped standard errors, the boostrapped errors for the Intercept, CM.2015, and ContinentAsia:CM.2015 were all greater than the original standard errors for those same values while the boostrapped error for Contientn Asia was less than the original standard error for that same value. The bootsrapped standard error using residual resampling were both larger (Continent) and smaller (intercept and child mortality) compared to the bootstrapped standard errors using row sampling. For the residual resampling standard errors, similar to before, the standard errors for some variables were larger than some of the heteroskedastic standard errors. However, the normal standard errors were all greater than the residual resampling standard errors. In our case, we should probably use the one with the largest error between the two boostrapped errors, which would approximately be the residual resampling error. This would allow us to account for as much error as possible.</p>
+<p><strong>5. Logistic Regression Model</strong></p>
+<pre class="r"><code>#Preparing the Data
+Combined_Data_c&lt;-Combined_Data_c%&gt;%mutate(y=as.numeric(Continent==&quot;Africa&quot;))
+
+#Logistic Regression
+fit5&lt;-glm(y~CO2.Emission.2015+LE.2015,data=Combined_Data_c,family=binomial(link=&quot;logit&quot;))
+coeftest(fit5)</code></pre>
+<pre><code>## 
+## z test of coefficients:
+## 
+##                    Estimate Std. Error z value  Pr(&gt;|z|)    
+## (Intercept)       17.923401   4.030907  4.4465 8.728e-06 ***
+## CO2.Emission.2015 -0.095521   0.083680 -1.1415    0.2537    
+## LE.2015           -0.254660   0.059334 -4.2920 1.771e-05 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>exp(-0.095521)</code></pre>
+<pre><code>## [1] 0.9088993</code></pre>
+<pre class="r"><code>exp(-0.254660)</code></pre>
+<pre><code>## [1] 0.77518</code></pre>
+<p>While Controlling for life expectancy, there is not a significant effect of CO2 emissions per person based on the continent. However, if it were significant, every 1 unit increase in CO2 emissions increases the odds of the country being found in Africa by 0.9088993. While controlling for CO2 emissions, there is a significant effect of life expectancy on the location (continent) of the country. Every 1 unit increase in life expectancy increases the odds of the country being found in Africa by 0.77518. In both cases, the odds of the country beingn found in Africa increases as the CO2 emissions and the life expectancy go up.</p>
+<pre class="r"><code>Combined_Data_c$prob&lt;-predict(fit5,type=&quot;response&quot;)
+table(predict=as.numeric(Combined_Data_c$prob&gt;.5),truth=Combined_Data_c$y)%&gt;%addmargins</code></pre>
+<pre><code>##        truth
+## predict   0   1 Sum
+##     0    38   9  47
+##     1    11  44  55
+##     Sum  49  53 102</code></pre>
+<pre class="r"><code>#Accuracy
+(38+44)/102</code></pre>
+<pre><code>## [1] 0.8039216</code></pre>
+<pre class="r"><code>#Sensitivity
+(44)/53</code></pre>
+<pre><code>## [1] 0.8301887</code></pre>
+<pre class="r"><code>#Specificity
+(38)/49</code></pre>
+<pre><code>## [1] 0.7755102</code></pre>
+<pre class="r"><code>#Precision
+(44)/55</code></pre>
+<pre><code>## [1] 0.8</code></pre>
+<p>From the confusion matrix, the accuracy, or number of predicted countries located in Asia which are actually located in Asia, is 0.8039216. The sensitivity, or the true positive rate, is 0.8301887. The specificity, or true negative rate, is 0.87755102. Finally, the precisions, or proportion of predicted countries located in Africa which are actually located in Africa, is 0.8.</p>
+<pre class="r"><code>#Density of Log-Odds Plot
+Combined_Data_c$odds&lt;-(Combined_Data_c$prob)/(1-Combined_Data_c$prob)
+Combined_Data_c$logit&lt;-log(Combined_Data_c$odds)
+
+ggplot(Combined_Data_c)+geom_density(aes(logit,fill=Continent),alpha=0.3)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<pre class="r"><code>#ROC Curve and AUC
+ROCplot&lt;-ggplot(Combined_Data_c)+geom_roc(aes(d=y,m=prob),n.cuts=0)+geom_segment(aes(x=0,xend=1,y=0,yend=1))
+ROCplot</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-18-2.png" width="672" /></p>
+<pre class="r"><code>calc_auc(ROCplot)</code></pre>
+<pre><code>##   PANEL group       AUC
+## 1     1    -1 0.8914132</code></pre>
+<p>The AUC of the model was 0.8914132. This is the probability of selecting a country located in Asia with a higher predictio than a country located in Africa, while taking into account the life expectancy and the CO2 emissions per person. This is a fairly good AUC, meaning that CO2 emissions per person and life expectancy are good predictors for a country continental location.</p>
+<p><strong>6. Logistic Regression of ALL Variables</strong></p>
+<pre class="r"><code>#Preparing the Data
+Combined_Data_c&lt;-Combined_Data_c%&gt;%mutate(y=as.numeric(Continent==&quot;Africa&quot;))
+
+#Logistic Regression
+fit6&lt;-glm(y~CO2.Emission.2015+LE.2015+FR2015+CM.2015,data=Combined_Data_c,family=binomial(link=&quot;logit&quot;))
+coeftest(fit6)</code></pre>
+<pre><code>## 
+## z test of coefficients:
+## 
+##                    Estimate Std. Error z value Pr(&gt;|z|)  
+## (Intercept)        8.775934   5.858426  1.4980  0.13413  
+## CO2.Emission.2015 -0.052140   0.077675 -0.6713  0.50206  
+## LE.2015           -0.146768   0.084037 -1.7465  0.08073 .
+## FR2015             0.483028   0.357876  1.3497  0.17711  
+## CM.2015            0.011999   0.021871  0.5486  0.58328  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>Combined_Data_c$prob&lt;-predict(fit6,type=&quot;response&quot;)
+table(predict=as.numeric(Combined_Data_c$prob&gt;.5),truth=Combined_Data_c$y)%&gt;%addmargins</code></pre>
+<pre><code>##        truth
+## predict   0   1 Sum
+##     0    43   8  51
+##     1     6  45  51
+##     Sum  49  53 102</code></pre>
+<pre class="r"><code>#Accuracy
+(43+45)/102</code></pre>
+<pre><code>## [1] 0.8627451</code></pre>
+<pre class="r"><code>#Sensitivity
+(45)/53</code></pre>
+<pre><code>## [1] 0.8490566</code></pre>
+<pre class="r"><code>#Specificity
+(43)/49</code></pre>
+<pre><code>## [1] 0.877551</code></pre>
+<pre class="r"><code>#Precision
+(45)/51</code></pre>
+<pre><code>## [1] 0.8823529</code></pre>
+<p>The accuracy, or number of predicted countries located in Asia which are actually located in Asia, is 0.8627451. The sensitivity, or the true positive rate, is 0.8490566. The specificity, or true negative rate, is 0.877551. Finally, the precisions, or proportion of predicted countries located in Africa which are actually located in Africa, is 0.8823529.</p>
+<pre class="r"><code>#Class Diagnostics Function
+class_diag&lt;-function(probs,truth){
+  tab&lt;-table(factor(probs&gt;.5,levels=c(&quot;FALSE&quot;,&quot;TRUE&quot;)),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+  if(is.numeric(truth)==FALSE &amp; is.logical(truth)==FALSE) truth&lt;-as.numeric(truth)-1
+  ord&lt;-order(probs,decreasing=TRUE)
+  probs&lt;-probs[ord];truth&lt;-truth[ord]
+  TPR=cumsum(truth)/max(1,sum(truth))
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  dup&lt;-c(probs[-1]&gt;=probs[-length(probs)],FALSE)
+  TPR&lt;-c(0,TPR[!dup],1);FPR&lt;-c(0,FPR[!dup],1)
+  n&lt;-length(TPR)
+  auc&lt;-sum(  ((TPR[-1]+TPR[-n])/2)*(FPR[-1]-FPR[-n])   )
+  data.frame(acc,sens,spec,ppv,auc)
+}
+
+
+#10-Fold CV
+set.seed(1234)
+k=10
+data1&lt;-Combined_Data_c[sample(nrow(Combined_Data_c)),]
+folds&lt;-cut(seq(1:nrow(Combined_Data)),breaks=k,labels=F) 
+diags&lt;-NULL
+for(i in 1:k){
+train&lt;-data1[folds!=i,]
+test&lt;-data1[folds==i,]
+truth&lt;-test$y 
+fit&lt;-glm(y~CO2.Emission.2015+LE.2015+FR2015+CM.2015,data=train,family=&quot;binomial&quot;) 
+probs&lt;-predict(fit,newdata = test,type=&quot;response&quot;)
+diags&lt;-rbind(diags,class_diag(probs,truth))
+} 
+apply(diags,2,mean)</code></pre>
+<pre><code>##       acc      sens      spec       ppv       auc 
+## 0.8127273 0.8309524 0.8268254 0.8065476 0.8835317</code></pre>
+<p>The accuracy, sensitivity, specificity, precision, and auc were 0.8127273, 0.8309524, 0.8268254, 0.8065476, and 0.8835317, respectively. The AUC was still relativelyt good (0.8835317), but was lower than found previously (0.8914132). However, the difference was not that significant, but it could be likely that this is a sign of overfitting.</p>
+<pre class="r"><code>#Prepping Dataset Variable
+Combined_Data_c$Country=NULL
+Combined_Data_c$Continent=NULL
+Combined_Data_c$prob=NULL
+Combined_Data_c$odds=NULL
+Combined_Data_c$logit=NULL
+
+#Linear Regression
+fit7&lt;-lm(y~.,data=Combined_Data_c,family=&quot;binomial&quot;)</code></pre>
+<pre><code>## Warning: In lm.fit(x, y, offset = offset, singular.ok = singular.ok, ...) :
+##  extra argument &#39;family&#39; will be disregarded</code></pre>
+<pre class="r"><code>#LASSO Regression
+y&lt;-as.matrix(Combined_Data_c$y)
+x&lt;-model.matrix(fit7)
+cv&lt;-cv.glmnet(x,y,family=&quot;binomial&quot;)
+lasso&lt;-glmnet(x,y,family=&quot;binomial&quot;,lambda=cv$lambda.1se)
+coef(lasso)</code></pre>
+<pre><code>## 6 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                             s0
+## (Intercept)        4.645814434
+## (Intercept)        .          
+## CM.2015            0.005598123
+## CO2.Emission.2015  .          
+## FR2015             0.261700679
+## LE.2015           -0.079079518</code></pre>
+<p>After running a lasso regression on the linear model predicting the country's continent location from all the other variables, the variables that were significant were child mortality, fertility rate, and life expectancy. Therefore, all of these variables will be used in the regression below while the other &quot;noise&quot; variables will be removed from the dataset.</p>
+<pre class="r"><code>Combined_Data2&lt;-data.frame(Combined_Data$CM.2015,Combined_Data$FR2015,Combined_Data$LE.2015,Combined_Data_c$y)
+
+#10-Fold CV (Dataset already contiains significant variables)
+set.seed(1234)
+k=10
+data1&lt;-Combined_Data2[sample(nrow(Combined_Data2)),]
+folds&lt;-cut(seq(1:nrow(Combined_Data2)),breaks=k,labels=F)
+diags&lt;-NULL
+for(i in 1:k) {
+  train&lt;-data1[folds !=i,]
+  test&lt;-data1[folds==i,]
+  truth&lt;-test$Combined_Data_c.y
+  fit&lt;-lm(Combined_Data_c.y~.,data=train,family=&quot;binomial&quot;)
+  probs&lt;-predict(fit,newdata=test,type=&quot;response&quot;)
+  diags&lt;-rbind(diags,class_diag(probs,truth))
+}</code></pre>
+<pre><code>## Warning: In lm.fit(x, y, offset = offset, singular.ok = singular.ok, ...) :
+##  extra argument &#39;family&#39; will be disregarded
+
+## Warning: In lm.fit(x, y, offset = offset, singular.ok = singular.ok, ...) :
+##  extra argument &#39;family&#39; will be disregarded
+
+## Warning: In lm.fit(x, y, offset = offset, singular.ok = singular.ok, ...) :
+##  extra argument &#39;family&#39; will be disregarded
+
+## Warning: In lm.fit(x, y, offset = offset, singular.ok = singular.ok, ...) :
+##  extra argument &#39;family&#39; will be disregarded
+
+## Warning: In lm.fit(x, y, offset = offset, singular.ok = singular.ok, ...) :
+##  extra argument &#39;family&#39; will be disregarded
+
+## Warning: In lm.fit(x, y, offset = offset, singular.ok = singular.ok, ...) :
+##  extra argument &#39;family&#39; will be disregarded
+
+## Warning: In lm.fit(x, y, offset = offset, singular.ok = singular.ok, ...) :
+##  extra argument &#39;family&#39; will be disregarded
+
+## Warning: In lm.fit(x, y, offset = offset, singular.ok = singular.ok, ...) :
+##  extra argument &#39;family&#39; will be disregarded
+
+## Warning: In lm.fit(x, y, offset = offset, singular.ok = singular.ok, ...) :
+##  extra argument &#39;family&#39; will be disregarded
+
+## Warning: In lm.fit(x, y, offset = offset, singular.ok = singular.ok, ...) :
+##  extra argument &#39;family&#39; will be disregarded</code></pre>
+<pre class="r"><code>diags %&gt;% summarize_all(mean)</code></pre>
+<pre><code>##         acc      sens      spec      ppv       auc
+## 1 0.8327273 0.8309524 0.8601587 0.844881 0.8740079</code></pre>
+<p>The out-of-sample accuracy for this model is 0.8327273. The accuracy for the model in question 5 was 0.8039216, so the accuracy improved slightly. However, it is not likely that this change was significant. The AUC from the logistic regressions was 0.8914132. The AUC in this regression decreased to 0.8740079. However, it is not likely that this change was significant at all.</p>
+</div>
+
+            
+        <hr>         <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div> 
+            </div>
+          </div>
+
+   <hr>  <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div> 
+        </div>
+      </div>
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="../../js/docs.min.js"></script>
+<script src="../../js/main.js"></script>
+
+<script src="../../js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>

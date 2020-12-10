@@ -1,0 +1,355 @@
+---
+title: "Comp Bio Project 2"
+author: "Abhishek Bansal"
+date: "11/23/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Abhishek Bansal
+
+**Introduction**
+
+The datasets I have chosen were pulled from the gapminder database. The gapminder database compiles different statistics (i.e. income, GDP, population, etc.) about countries around the world. The first dataset contains information about the life expectancy (in years) of countries located in Africa and Asia in 2015. The second dataset contains information about the child mortality rates of countries located in Africa and Asia in 2015. The third dataset contains information about the fertility rates of countries located in Africa and Asia in 2015. The fourth dataset contains information about the CO2 emissions per person of countries located in Africa and Asia in 2015. The fifth dataset contains information about the continent each country is located in (either Africa or Asia) as of 2015. The final dataset will contain 4 numeric variables (life expectancy, child mortality rate,fertility rate, and CO2 Emissions) and 2 categorical variables (country and continent). These datasets were pulled by filtering for the year 2015 and selecting the desired variables. There are a maximum total of 123 observations in the merged dataset. This is because some of the numeric variables were not recorded during 2015 for every single countries, so NAs will be naturally filled in these holes in order to make combining the datasets possible. Furthermore, the NAs were removed from the dataset, and only countries that are located in Africa or Asia were analyzed. 
+
+```{R}
+library(lmtest) 
+library(sandwich) 
+library(plotROC) 
+library(tidyverse) 
+library(MASS) 
+library(glmnet) 
+library(ggplot2)
+
+#I am going to import the datasets. 
+childmortality<-read_csv("child_mortality_0_5_year_olds_dying_per_1000_born.csv")
+fertility <- read_csv("children_per_woman_total_fertility.csv")
+lifeexpectancy <- read_csv("life_expectancy_years.csv")
+Continent <- read_csv("Continent.csv")
+CO2<-read.csv("co2_emissions_tonnes_per_person.csv")
+
+#Merging the Datasets
+Combined_Data <- childmortality %>% left_join(CO2) %>% left_join(Continent) %>% left_join(fertility) %>% left_join(lifeexpectancy)
+Combined_Data <- Combined_Data %>% na.omit()
+```
+
+**1. MANOVA Test**
+
+```{R}
+manova<-manova(cbind(CM.2015, CO2.Emission.2015,FR2015, LE.2015)~Continent,data=Combined_Data)
+summary(manova)
+```
+A MANOVA test was done in order to find the effect of Continent (location) on child mortality, CO2 emissions, life expectancy, ,and fertility rate in different countries in 2015. The MANOVA showed that there were significant differences in each of the variables (p-value less than 0.5). 
+
+```{R}
+#Univariate ANOVAs
+summary.aov(manova)
+```
+ANOVA's for each numeric variable were conducted as some follow-up tests to the MANOVA. The univariate ANOVA tests for child mortality, CO2 Emissions, fertility rate, and life expectancy alll had p-values less than 0.05. Thus, all of the tests were significant, and all these variables differ based on continent (location).
+
+```{R}
+#Post-Hoc T-tests
+pairwise.t.test(Combined_Data$CM.2015,Combined_Data$Continent,p.adj="none")
+pairwise.t.test(Combined_Data$FR2015,Combined_Data$Continent,p.adj="none")
+pairwise.t.test(Combined_Data$CO2.Emission.2015,Combined_Data$Continent,p.adj="none")
+pairwise.t.test(Combined_Data$LE.2015,Combined_Data$Continent,p.adj="none")
+```
+Post hoc analysis was done by doing pairwise comparisons in order to determine which Continents differ in a specific numeric variable. It seems that Asia and Africa significantly differs in terms of all four variables: child mortality, fertility rates, CO2 Emissions, and life expectancy. 
+```{R}
+#Probability of At Least One Type-1 Error
+1-(1-0.05)^9
+```
+There were 9 different hypothesis tests conducted, so the probability of at least 1 Type-1 error is 0.3697506.
+
+```{R}
+#Bonferroni Adjustment
+0.05/9
+```
+To keep the Type-1 error at 0.05, a bonferroni adjustment was used to correct the significance level to 0.00555556. 
+
+```{R}
+#Adjusted Post-Hoc T-tests (Bonferroni)
+pairwise.t.test(Combined_Data$CM.2015,Combined_Data$Continent,p.adj="bonf")
+pairwise.t.test(Combined_Data$FR2015,Combined_Data$Continent,p.adj="bonf")
+pairwise.t.test(Combined_Data$CO2.Emission.2015,Combined_Data$Continent,p.adj="bonf")
+pairwise.t.test(Combined_Data$LE.2015,Combined_Data$Continent,p.adj="bonf")
+```
+After adjusting the significance level (bonferroni), the mean difference betweeen Africa and Asia is still significant for child mortality, fertility rate, CO2 emissions, and life expectancy.
+
+The assumptions of the ANOVA test (random sample, independent observations, equal variance, etc.) were most likely met, but the assumptions for the ANOVA tests were probably not met. MANOVA tests have a lot more assumptions, such as homogeneity, no multicollinearity, no extreme outliers, multivariate normality, etc. As a result, it would be hard to find any dataset that meets every single one of these assumptions. 
+
+**2. Randomization Tests**
+
+Null and Alternative Hypothesis
+Null (Ho): The fertility rate is the same in Africa and North America. 
+Alternative (Ha): The fertility rate is different in Africa and North America.
+
+```{R}
+#Test Statistic (mean difference)
+mean_diff<-mean(Combined_Data[Combined_Data$Continent=="Africa",]$FR2015)-mean(Combined_Data[Combined_Data$Continent=="Asia",]$FR2015)
+
+#Permutation Loop
+rand_dist<-vector()
+for(i in 1:5000){
+  new<-data.frame(FR2015=sample(Combined_Data$FR2015),Cont=Combined_Data$Continent)
+  rand_dist[i]<-mean(new[new$Cont=="Africa",]$FR2015)-mean(new[new$Cont=="Asia",]$FR2015)}
+
+#P-Value for Permutation Test
+mean(rand_dist>mean_diff)*2
+
+#Independent T-test for Comparison
+t.test(data=Combined_Data,FR2015~Continent)
+```
+
+According to the randomization test and two sample t-test, the p-values from both of these tests are each below 0.05. So, the null hypothesis can be rejected. There is a significant difference in child mortality in Africa and Asia. 
+
+```{R}
+#Visualizing Null Distribution and Test Statistic
+{hist(rand_dist,main="",ylab="");abline(v=mean_diff,col="red")}
+{hist(rand_dist,main="",ylab="",breaks=2);abline(v=mean_diff,col="red")}
+```
+Breaks were added to the second histogram in order to visualize the test statistic. However, it makes the distribution look different, so a histogram containing the distribution and a histogram containing the line of the test statistic were both created.
+
+
+**3. Linear Regression Model**
+
+```{R}
+#Mean-Centering Numeric Variables
+Combined_Data -> Combined_Data_c
+Combined_Data_c$CM.2015 <- Combined_Data_c$CM.2015 - mean(Combined_Data_c$CM.2015,na.rm=T)
+
+#Linear Regression with Interaction
+fit1<-lm(LE.2015~Continent*CM.2015,data=Combined_Data_c)
+summary(fit1)
+```
+The intercept estimate was 67.20517, which is the average life expectancy when there is no interaction between Continent and child mortality. The coefficient estimate of Continent was 1.34653, which is how much the life expectancy increases when the continent is "Asia". The coefficient estimate of child mortality in 2015 (CM.2015) was -0.13739 which shows how much the life expectancy decreases as the child mortality increases by 1. The coefficient of ContinentAsia:CM.2015 was -0.09722, and shows how much the life expectancy will decrease if the country is located in Asia and the child mortality increases by 1. 
+
+```{R}
+ggplot(Combined_Data_c,aes(x=CM.2015,y=LE.2015,group=Continent))+geom_point(aes(color=Continent))+geom_smooth(method="lm",se=F,fullrange=T,aes(color=Continent))+ggtitle("Interaction Between Continent and Child Mortality on Life Expectancy in 2015")+xlab("Child Mortality in 2015")+ylab("Life Expectancy in 2015")
+```
+
+```{R}
+#Checking Assumptions
+resids<-fit1$residuals
+fitvals<-fit1$fitted.values
+
+#Linearity
+ggplot(Combined_Data_c,aes(x=CM.2015,y=LE.2015))+geom_point()+geom_smooth(method="lm",se=F)
+
+#Homoskedasticity from Graph
+ggplot()+geom_point(aes(fitvals,resids))+geom_hline(yintercept=0,color='red')
+
+#Homoskedasticity from Breuch-Pagan Test
+bptest(fit1)
+
+#Normality from Graph
+ggplot()+geom_histogram(aes(resids),bins=10)
+
+ggplot()+geom_qq(aes(sample=resids))+geom_qq_line()
+
+#Normality from Shapiro-Wilk Test
+shapiro.test(resids)
+```
+According to the graph, the numeric variable, life expectancy, does seem to have a linear relationship. Additionally, the other two variables (Continent and Child Mortality) are dummy coded and also linear. According to the Breusch-Pagan test, we fail to reject the null hypothesis of homoskedasticity because the p-value (0.3068) was greater than 0.05. According to the Shapiro-Wilk normality test, we fail to reject the null hypothesis of normality beacause the p-value (0.6541) was greater than 0.05. Therefore, the assumptions for linearity, homoskedasticity, and normality are all met. 
+
+```{R}
+#Heteroskedasticity Robust Standard Errors
+coeftest(fit1,vcov=vcovHC(fit1))
+```
+Even though the data met the assumption for homoskedasticity, the regression with heteroskedasticity was redone using robus standard errors. After this was done, the t-values changed very slightly. Furthermore, the p-values change slightly, but not enough to change their previous significance. Overall, the results stayed relatively the same. 
+
+```{R}
+#Proportion of Variation in Outcome Explained by my Model
+summary(fit1)
+```
+According to the R^2 indicator, the proportion of variation in Life Expectancy explained by the overall model is 0.7719. The adjusted R-squared, which is more conservative, shows that the proportion of variation in life expectncy explained by the model is 0.7649. 
+
+**4. Bootstrapping Standard Errors**
+
+```{R}
+#Boostrapped SE
+samp_distn<-replicate(5000,{
+  boot_dat<-boot_dat<-Combined_Data_c[sample(nrow(Combined_Data_c),replace=TRUE),]
+  fit3<-lm(LE.2015~Continent*CM.2015,data=boot_dat)
+  coef(fit3)
+})
+
+samp_distn%>%t%>%as.data.frame%>%summarize_all(sd)
+
+#Bootstrapped SE (Resampling Residuals)
+fit3<-lm(LE.2015~Continent*CM.2015,data=Combined_Data_c)
+resids<-fit3$residuals
+fitted<-fit3$fitted.values
+
+resid_resamp<-replicate(5000,{
+  new_resids<-sample(resids,replace=TRUE)
+  Combined_Data_c$new_y<-fitted+new_resids
+  fit4<-lm(new_y~Continent*CM.2015,data=Combined_Data_c)
+  coef(fit4)
+})
+
+resid_resamp%>%t%>%as.data.frame%>%summarize_all(sd)
+```
+Since the data was not completely normal, it was important to rerun the model with bootstrapped standard errors. The bootstraped standard errors were all lower than the robust hetereskedastic standard errors. However, when comparing the original standard errors to the bootstrapped standard errors, the boostrapped errors for the Intercept, CM.2015, and ContinentAsia:CM.2015 were all greater than the original standard errors for those same values while the boostrapped error for Contientn Asia was less than the original standard error for that same value. The bootsrapped standard error using residual resampling were both larger (Continent) and smaller (intercept and child mortality) compared to the bootstrapped standard errors using row sampling. For the residual resampling standard errors, similar to before, the standard errors for some variables were larger than some of the heteroskedastic standard errors. However, the normal standard errors were all greater than the residual resampling standard errors. In our case, we should probably use the one with the largest error between the two boostrapped errors, which would approximately be the residual resampling error. This would allow us to account for as much error as possible.
+
+**5. Logistic Regression Model**
+
+```{R}
+#Preparing the Data
+Combined_Data_c<-Combined_Data_c%>%mutate(y=as.numeric(Continent=="Africa"))
+
+#Logistic Regression
+fit5<-glm(y~CO2.Emission.2015+LE.2015,data=Combined_Data_c,family=binomial(link="logit"))
+coeftest(fit5)
+
+exp(-0.095521)
+
+exp(-0.254660)
+```
+While Controlling for life expectancy, there is not a significant effect of CO2 emissions per person based on the continent. However, if it were significant, every 1 unit increase in CO2 emissions increases the odds of the country being found in Africa by 0.9088993. While controlling for CO2 emissions, there is a significant effect of life expectancy on the location (continent) of the country. Every 1 unit increase in life expectancy increases the odds of the country being found in Africa by 0.77518. In both cases, the odds of the country beingn found in Africa increases as the CO2 emissions and the life expectancy go up. 
+
+```{R}
+Combined_Data_c$prob<-predict(fit5,type="response")
+table(predict=as.numeric(Combined_Data_c$prob>.5),truth=Combined_Data_c$y)%>%addmargins
+
+#Accuracy
+(38+44)/102
+
+#Sensitivity
+(44)/53
+
+#Specificity
+(38)/49
+
+#Precision
+(44)/55
+```
+From the confusion matrix, the accuracy, or number of predicted countries located in Asia which are actually located in Asia, is 0.8039216. The sensitivity, or the true positive rate, is 0.8301887. The specificity, or true negative rate, is 0.87755102. Finally, the precisions, or proportion of predicted countries located in Africa which are actually located in Africa, is 0.8. 
+
+```{R}
+#Density of Log-Odds Plot
+Combined_Data_c$odds<-(Combined_Data_c$prob)/(1-Combined_Data_c$prob)
+Combined_Data_c$logit<-log(Combined_Data_c$odds)
+
+ggplot(Combined_Data_c)+geom_density(aes(logit,fill=Continent),alpha=0.3)
+
+#ROC Curve and AUC
+ROCplot<-ggplot(Combined_Data_c)+geom_roc(aes(d=y,m=prob),n.cuts=0)+geom_segment(aes(x=0,xend=1,y=0,yend=1))
+ROCplot
+
+calc_auc(ROCplot)
+```
+The AUC of the model was 0.8914132. This is the probability of selecting a country located in Asia with a higher predictio than a country located in Africa, while taking into account the life expectancy and the CO2 emissions per person. This is a fairly good AUC, meaning that CO2 emissions per person and life expectancy are good predictors for a country continental location. 
+
+**6. Logistic Regression of ALL Variables**
+
+```{R}
+#Preparing the Data
+Combined_Data_c<-Combined_Data_c%>%mutate(y=as.numeric(Continent=="Africa"))
+
+#Logistic Regression
+fit6<-glm(y~CO2.Emission.2015+LE.2015+FR2015+CM.2015,data=Combined_Data_c,family=binomial(link="logit"))
+coeftest(fit6)
+
+Combined_Data_c$prob<-predict(fit6,type="response")
+table(predict=as.numeric(Combined_Data_c$prob>.5),truth=Combined_Data_c$y)%>%addmargins
+
+#Accuracy
+(43+45)/102
+
+#Sensitivity
+(45)/53
+
+#Specificity
+(43)/49
+
+#Precision
+(45)/51
+```
+The accuracy, or number of predicted countries located in Asia which are actually located in Asia, is 0.8627451. The sensitivity, or the true positive rate, is 0.8490566. The specificity, or true negative rate, is 0.877551. Finally, the precisions, or proportion of predicted countries located in Africa which are actually located in Africa, is 0.8823529. 
+
+```{R}
+#Class Diagnostics Function
+class_diag<-function(probs,truth){
+  tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+  if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) truth<-as.numeric(truth)-1
+  ord<-order(probs,decreasing=TRUE)
+  probs<-probs[ord];truth<-truth[ord]
+  TPR=cumsum(truth)/max(1,sum(truth))
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  dup<-c(probs[-1]>=probs[-length(probs)],FALSE)
+  TPR<-c(0,TPR[!dup],1);FPR<-c(0,FPR[!dup],1)
+  n<-length(TPR)
+  auc<-sum(  ((TPR[-1]+TPR[-n])/2)*(FPR[-1]-FPR[-n])   )
+  data.frame(acc,sens,spec,ppv,auc)
+}
+
+
+#10-Fold CV
+set.seed(1234)
+k=10
+data1<-Combined_Data_c[sample(nrow(Combined_Data_c)),]
+folds<-cut(seq(1:nrow(Combined_Data)),breaks=k,labels=F) 
+diags<-NULL
+for(i in 1:k){
+train<-data1[folds!=i,]
+test<-data1[folds==i,]
+truth<-test$y 
+fit<-glm(y~CO2.Emission.2015+LE.2015+FR2015+CM.2015,data=train,family="binomial") 
+probs<-predict(fit,newdata = test,type="response")
+diags<-rbind(diags,class_diag(probs,truth))
+} 
+apply(diags,2,mean)
+```
+The accuracy, sensitivity, specificity, precision, and auc were 0.8127273, 0.8309524, 0.8268254, 0.8065476, and 0.8835317, respectively. The AUC was still relativelyt good (0.8835317), but was lower than found previously (0.8914132). However, the difference was not that significant, but it could be likely that this is a sign of overfitting. 
+
+```{R}
+#Prepping Dataset Variable
+Combined_Data_c$Country=NULL
+Combined_Data_c$Continent=NULL
+Combined_Data_c$prob=NULL
+Combined_Data_c$odds=NULL
+Combined_Data_c$logit=NULL
+
+#Linear Regression
+fit7<-lm(y~.,data=Combined_Data_c,family="binomial")
+
+#LASSO Regression
+y<-as.matrix(Combined_Data_c$y)
+x<-model.matrix(fit7)
+cv<-cv.glmnet(x,y,family="binomial")
+lasso<-glmnet(x,y,family="binomial",lambda=cv$lambda.1se)
+coef(lasso)
+```
+After running a lasso regression on the linear model predicting the country's continent location from all the other variables, the variables that were significant were child mortality, fertility rate, and life expectancy. Therefore, all of these variables will be used in the regression below while the other "noise" variables will be removed from the dataset. 
+
+```{R}
+Combined_Data2<-data.frame(Combined_Data$CM.2015,Combined_Data$FR2015,Combined_Data$LE.2015,Combined_Data_c$y)
+
+#10-Fold CV (Dataset already contiains significant variables)
+set.seed(1234)
+k=10
+data1<-Combined_Data2[sample(nrow(Combined_Data2)),]
+folds<-cut(seq(1:nrow(Combined_Data2)),breaks=k,labels=F)
+diags<-NULL
+for(i in 1:k) {
+  train<-data1[folds !=i,]
+  test<-data1[folds==i,]
+  truth<-test$Combined_Data_c.y
+  fit<-lm(Combined_Data_c.y~.,data=train,family="binomial")
+  probs<-predict(fit,newdata=test,type="response")
+  diags<-rbind(diags,class_diag(probs,truth))
+}
+
+diags %>% summarize_all(mean)
+```
+The out-of-sample accuracy for this model is 0.8327273. The accuracy for the model in question 5 was 0.8039216, so the accuracy improved slightly. However, it is not likely that this change was significant. The AUC from the logistic regressions was 0.8914132. The AUC in this regression decreased to 0.8740079. However, it is not likely that this change was significant at all. 
+
+
